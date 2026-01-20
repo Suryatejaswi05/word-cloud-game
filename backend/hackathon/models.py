@@ -22,6 +22,7 @@ class AppUser(models.Model):
 
 class AppUserMember(models.Model):
     user = models.ForeignKey(AppUser, on_delete=models.CASCADE, related_name='members')
+    member_id = models.CharField(max_length=64, unique=True, null=True, blank=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(max_length=254, null=True, blank=True)
     phone = models.CharField(max_length=32)

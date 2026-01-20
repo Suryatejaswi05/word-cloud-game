@@ -145,6 +145,7 @@ class ApiMeView(View):
                 },
                 'member': {
                     'id': session.member.id,
+                    'member_id': session.member.member_id,
                     'name': session.member.name,
                     'email': session.member.email,
                     'phone': session.member.phone,

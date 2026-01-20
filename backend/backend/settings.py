@@ -32,7 +32,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost','127.0.0.1', 'localhost:5173']
 
 
 # Application definition
@@ -81,11 +81,11 @@ DATABASES = {
     },
     'student': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('STUDENT_DB_NAME') or os.getenv('DB_NAME'),
-        'USER': os.getenv('STUDENT_DB_USER') or os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('STUDENT_DB_PASSWORD') or os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('STUDENT_DB_HOST') or os.getenv('DB_HOST'),
-        'PORT': os.getenv('STUDENT_DB_PORT') or os.getenv('DB_PORT'),
+        'NAME': os.getenv('STUDENT_DB_NAME'),
+        'USER': os.getenv('STUDENT_DB_USER'),
+        'PASSWORD': os.getenv('STUDENT_DB_PASSWORD'),
+        'HOST': os.getenv('STUDENT_DB_HOST'),
+        'PORT': os.getenv('STUDENT_DB_PORT'),
     },
 }
 

@@ -223,8 +223,6 @@ function LoginPage() {
               />
             </div>
 
-            <div className="forgot">Forgot Password?</div>
-
             <button className="login-btn" type="submit" disabled={submitting}>
               Login
             </button>

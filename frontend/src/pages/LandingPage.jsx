@@ -50,6 +50,7 @@ function LandingPage() {
                   <div className="landing-username">{member?.name || '--'}</div>
                   <div className="landing-userdetail">{member?.email || '--'}</div>
                   <div className="landing-userdetail">{member?.phone || '--'}</div>
+                  <div className="landing-userdetail">{member?.member_id || '--'}</div>
                 </div>
               </div>
             </li>

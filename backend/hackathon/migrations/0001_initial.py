@@ -33,6 +33,7 @@ class Migration(migrations.Migration):
             name='AppUserMember',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('member_id', models.CharField(blank=True, max_length=64, null=True, unique=True)),
                 ('name', models.CharField(max_length=255)),
                 ('email', models.EmailField(blank=True, max_length=254, null=True)),
                 ('phone', models.CharField(max_length=32)),

@@ -58,7 +58,7 @@ class Command(BaseCommand):
         try:
             with open(csv_path, newline='', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
-                expected = {'Team No.', 'Name', 'Email', 'Phone'}
+                expected = {'Team No.', 'Member ID', 'Name', 'Email', 'Phone'}
                 if set(reader.fieldnames or []) != expected:
                     raise CommandError(f'CSV header must be exactly {sorted(expected)}. Got: {reader.fieldnames}')
 
@@ -67,12 +67,14 @@ class Command(BaseCommand):
             raise CommandError(f'CSV file not found: {csv_path}') from exc
 
         teams: dict[int, list[dict]] = {}
+        seen_member_ids: set[str] = set()
 
         for idx, row in enumerate(rows, start=2):
             if not (row.get('Team No.') or '').strip() and not (row.get('Phone') or '').strip():
                 continue
 
             team_no_raw = (row.get('Team No.') or '').strip()
+            member_id = (row.get('Member ID') or '').strip()
             name = (row.get('Name') or '').strip()
             email = (row.get('Email') or '').strip() or None
             phone_raw = row.get('Phone')
@@ -82,6 +84,10 @@ class Command(BaseCommand):
 
             if not team_no_raw:
                 raise CommandError(f'Row {idx}: missing Team No.')
+            if not member_id:
+                raise CommandError(f'Row {idx}: missing Member ID')
+            if member_id in seen_member_ids:
+                raise CommandError(f'Row {idx}: duplicate Member ID {member_id!r}')
             if not name:
                 raise CommandError(f'Row {idx}: missing Name')
 
@@ -91,7 +97,9 @@ class Command(BaseCommand):
             except ValueError as exc:
                 raise CommandError(f'Row {idx}: {exc}') from exc
 
-            teams.setdefault(team_no, []).append({'name': name, 'email': email, 'phone': phone})
+            seen_member_ids.add(member_id)
+
+            teams.setdefault(team_no, []).append({'member_id': member_id, 'name': name, 'email': email, 'phone': phone})
 
         if not teams:
             raise CommandError('No valid team rows found in CSV.')
@@ -105,18 +113,26 @@ class Command(BaseCommand):
             if len(members) > 5:
                 raise CommandError(f'Team {team_no} has {len(members)} members (> 5).')
 
+            phones: dict[str, str] = {}
+            for m in members:
+                if m['phone'] in phones and phones[m['phone']] != m['member_id']:
+                    raise CommandError(
+                        f"Team {team_no} has duplicate phone {m['phone']!r} for Member IDs {phones[m['phone']]!r} and {m['member_id']!r}."
+                    )
+                phones[m['phone']] = m['member_id']
+
         if append_only:
             for team_no, members in teams.items():
                 existing_user = AppUser.objects.filter(team_no=team_no).first()
                 if existing_user is None:
                     continue
 
-                existing_phones = set(
-                    AppUserMember.objects.filter(user=existing_user).values_list('phone', flat=True)
+                existing_member_ids = set(
+                    AppUserMember.objects.filter(user=existing_user).values_list('member_id', flat=True)
                 )
-                incoming_phones = {m['phone'] for m in members}
-                new_phones = incoming_phones - existing_phones
-                total_after = len(existing_phones) + len(new_phones)
+                incoming_member_ids = {m['member_id'] for m in members}
+                new_member_ids = incoming_member_ids - existing_member_ids
+                total_after = len(existing_member_ids) + len(new_member_ids)
                 if total_after > 5:
                     raise CommandError(
                         f'Team {team_no} would have {total_after} members (> 5) after append-only import.'
@@ -128,10 +144,10 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             for team_no, members in teams.items():
-                unique_by_phone: dict[str, dict] = {}
+                unique_by_member_id: dict[str, dict] = {}
                 for m in members:
-                    unique_by_phone[m['phone']] = m
-                members = list(unique_by_phone.values())
+                    unique_by_member_id[m['member_id']] = m
+                members = list(unique_by_member_id.values())
 
                 password = _format_password(team_no)
                 salt_b64, password_hash_b64, iterations = hash_password(password, iterations=PBKDF2_ITERATIONS)
@@ -159,20 +175,22 @@ class Command(BaseCommand):
                     )
 
                 if not append_only:
-                    AppUserMember.objects.filter(user=user).exclude(phone__in=[m['phone'] for m in members]).delete()
+                    AppUserMember.objects.filter(user=user).exclude(member_id__in=[m['member_id'] for m in members]).delete()
 
                 for m in members:
                     if append_only:
-                        AppUserMember.objects.get_or_create(
-                            user=user,
-                            phone=m['phone'],
-                            defaults={'name': m['name'], 'email': m['email']},
+                        member, created_member = AppUserMember.objects.get_or_create(
+                            member_id=m['member_id'],
+                            defaults={'user': user, 'phone': m['phone'], 'name': m['name'], 'email': m['email']},
                         )
+                        if not created_member and member.user_id != user.id:
+                            raise CommandError(
+                                f"Member ID {m['member_id']!r} already exists under Team {member.user.team_no}; cannot append into Team {team_no}."
+                            )
                     else:
                         AppUserMember.objects.update_or_create(
-                            user=user,
-                            phone=m['phone'],
-                            defaults={'name': m['name'], 'email': m['email']},
+                            member_id=m['member_id'],
+                            defaults={'user': user, 'phone': m['phone'], 'name': m['name'], 'email': m['email']},
                         )
 
         self.stdout.write(self.style.SUCCESS('Import completed.'))
