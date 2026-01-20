@@ -7,3 +7,6 @@ frontend/node_modules
 # python
 __pycache__/
 *.pyc
+
+#manjunath changes
+backend/.venv

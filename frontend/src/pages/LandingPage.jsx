@@ -67,8 +67,15 @@ function LandingPage() {
       </div>
 
       <main className="landing-center" aria-live="polite">
-        <h1 className="landing-title">Welcome to hackathon</h1>
-        <p className="landing-subtitle">This is your Starting point of your hackathon.</p>
+        <section className="center-section">
+          <h2 className="title">Word Cloud</h2>
+          <p className="description">
+            Create a fresh word cloud and invite participants to submit their words for this round.
+          </p>
+          <button type="button" className="primary-button">
+            Start New Round
+          </button>
+        </section>
       </main>
     </div>
   )
