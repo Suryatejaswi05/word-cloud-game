@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthContext.jsx'
+import { useAuth } from '../auth/useAuth.js'
 
 function LandingPage() {
   const navigate = useNavigate()
@@ -29,6 +29,7 @@ function LandingPage() {
     <div className="landing-shell">
       <div className="landing-topbar">
         <div className="landing-team">Team No: {user?.team_no ?? '--'}</div>
+        <div style={{ marginLeft: 'auto', color: 'var(--dark-1)', fontWeight: 'bold' }}>Points: {user?.points ?? 0}</div>
 
         <div className="dropdown" ref={menuRef}>
           <button
@@ -72,7 +73,7 @@ function LandingPage() {
           <p className="description">
             Create a fresh word cloud and invite participants to submit their words for this round.
           </p>
-          <button type="button" className="primary-button">
+          <button type="button" className="primary-button" onClick={() => navigate('/select-question')}>
             Start New Round
           </button>
         </section>

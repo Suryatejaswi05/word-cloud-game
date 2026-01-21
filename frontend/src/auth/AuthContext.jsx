@@ -1,8 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { apiLogin, apiLogout, apiMe, apiOtpVerify } from '../api/authApi.js'
 import { clearAuthToken, getAuthToken, setAuthToken } from './tokenStorage.js'
 
 const AuthContext = createContext(null)
+
+export { AuthContext }
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => getAuthToken())
@@ -83,10 +85,4 @@ export function AuthProvider({ children }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
 }

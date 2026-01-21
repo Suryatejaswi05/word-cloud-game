@@ -1,11 +1,15 @@
 import json
 import re
+import uuid
+import random
 from datetime import timedelta
 
 from django.http import HttpRequest, JsonResponse
 from django.db import transaction
 from django.utils import timezone
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from .auth import (
     create_session_token,
@@ -17,7 +21,7 @@ from .auth import (
     verify_otp_via_gateway,
     verify_password,
 )
-from .models import AppUser, AppUserMember, AuthSession, OtpChallenge
+from .models import AppUser, AppUserMember, AuthSession, OtpChallenge, Hackathon, Submission, Question, GameRound, Response, ShareEvent
 
 
 def _normalize_phone(raw: str) -> str:
@@ -50,6 +54,23 @@ def _get_session(request: HttpRequest) -> AuthSession | None:
     )
 
 
+def _generate_share_token() -> str:
+    return str(uuid.uuid4())
+
+
+def _augment_responses(round_id: int, word: str):
+    # Add 10 random words for simulation
+    random_words = ['happy', 'sad', 'excited', 'tired', 'angry', 'joyful', 'frustrated', 'calm', 'energetic', 'relaxed']
+    for _ in range(10):
+        augmented_word = random.choice(random_words)
+        Response.objects.create(
+            round_id=round_id,
+            player_id=f'augmented_{uuid.uuid4()}',
+            word=augmented_word,
+            is_augmented=True
+        )
+
+
 def _json_body(request: HttpRequest) -> dict:
     if not request.body:
         return {}
@@ -65,6 +86,10 @@ class HealthView(View):
 
 
 class ApiLoginView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def post(self, request: HttpRequest) -> JsonResponse:
         payload = _json_body(request)
         username_raw = (payload.get('username') or '').strip()
@@ -142,6 +167,7 @@ class ApiMeView(View):
                     'id': session.user.id,
                     'username': session.user.username,
                     'team_no': session.user.team_no,
+                    'points': session.user.points,
                 },
                 'member': {
                     'id': session.member.id,
@@ -154,7 +180,28 @@ class ApiMeView(View):
         )
 
 
+class ApiQuestionsView(View):
+    def get(self, request: HttpRequest) -> JsonResponse:
+        questions = [
+            "How are you feeling today?",
+            "What is your favorite color?",
+            "What motivates you the most?",
+            "How was your day?",
+            "What are you grateful for?",
+            "What makes you happy?",
+            "What is your biggest challenge?",
+            "What are you looking forward to?",
+            "How do you relax?",
+            "What inspires you?",
+        ]
+        return JsonResponse({'questions': questions})
+
+
 class ApiLogoutView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def post(self, request: HttpRequest) -> JsonResponse:
         session = _get_session(request)
         if session is None:
@@ -166,7 +213,9 @@ class ApiLogoutView(View):
 
 
 class ApiOtpRequestView(View):
-    OTP_TTL = timedelta(minutes=5)
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def post(self, request: HttpRequest) -> JsonResponse:
         payload = _json_body(request)
@@ -254,6 +303,10 @@ class ApiOtpRequestView(View):
 
 
 class ApiOtpVerifyView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def post(self, request: HttpRequest) -> JsonResponse:
         payload = _json_body(request)
         challenge_id = payload.get('challenge_id')
@@ -310,3 +363,276 @@ class ApiOtpVerifyView(View):
                 'user': {'id': user.id, 'username': user.username},
             }
         )
+
+
+class ApiHackathonsView(View):
+    def get(self, request: HttpRequest) -> JsonResponse:
+        session = _get_session(request)
+        if session is None or not session.user.is_active:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        hackathons = Hackathon.objects.filter(is_active=True).order_by('-start_date')
+        data = []
+        for h in hackathons:
+            data.append({
+                'id': h.id,
+                'name': h.name,
+                'description': h.description,
+                'start_date': h.start_date.isoformat(),
+                'end_date': h.end_date.isoformat(),
+                'registration_deadline': h.registration_deadline.isoformat(),
+            })
+        return JsonResponse({'hackathons': data})
+
+
+class ApiSubmissionsView(View):
+    def get(self, request: HttpRequest) -> JsonResponse:
+        session = _get_session(request)
+        if session is None or not session.user.is_active:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        submissions = Submission.objects.filter(team=session.user).select_related('hackathon')
+        data = []
+        for s in submissions:
+            data.append({
+                'id': s.id,
+                'hackathon': {
+                    'id': s.hackathon.id,
+                    'name': s.hackathon.name,
+                },
+                'title': s.title,
+                'description': s.description,
+                'github_url': s.github_url,
+                'demo_url': s.demo_url,
+                'submitted_at': s.submitted_at.isoformat(),
+            })
+        return JsonResponse({'submissions': data})
+
+    def post(self, request: HttpRequest) -> JsonResponse:
+        session = _get_session(request)
+        if session is None or not session.user.is_active:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        payload = _json_body(request)
+        hackathon_id = payload.get('hackathon_id')
+        title = (payload.get('title') or '').strip()
+        description = (payload.get('description') or '').strip()
+        github_url = (payload.get('github_url') or '').strip()
+        demo_url = (payload.get('demo_url') or '').strip()
+
+        if not hackathon_id or not title or not description:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+        try:
+            hackathon = Hackathon.objects.get(id=hackathon_id, is_active=True)
+        except Hackathon.DoesNotExist:
+            return JsonResponse({'error': 'Hackathon not found'}, status=404)
+
+        if Submission.objects.filter(hackathon=hackathon, team=session.user).exists():
+            return JsonResponse({'error': 'Submission already exists for this hackathon'}, status=400)
+
+        submission = Submission.objects.create(
+            hackathon=hackathon,
+            team=session.user,
+            title=title,
+            description=description,
+            github_url=github_url,
+            demo_url=demo_url,
+        )
+
+        return JsonResponse({
+            'id': submission.id,
+            'message': 'Submission created successfully'
+        })
+
+
+class ApiCreateRoundView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request: HttpRequest) -> JsonResponse:
+        session = _get_session(request)
+        if session is None or not session.user.is_active:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        payload = _json_body(request)
+        question_text = (payload.get('question') or '').strip()
+
+        if not question_text:
+            return JsonResponse({'error': 'Question is required'}, status=400)
+
+        with transaction.atomic():
+            question = Question.objects.create(
+                text=question_text,
+                created_by=session.user
+            )
+            share_token = _generate_share_token()
+            round_obj = GameRound.objects.create(
+                question=question,
+                created_by=session.user,
+                share_token=share_token
+            )
+            session.user.points += 1
+            session.user.save(update_fields=['points'])
+
+        return JsonResponse({
+            'round_id': round_obj.id,
+            'share_token': share_token,
+            'share_url': f'/respond/{share_token}'
+        })
+
+
+class ApiRoundDetailsView(View):
+    def get(self, request: HttpRequest, round_id: int) -> JsonResponse:
+        try:
+            round_obj = GameRound.objects.select_related('question').get(id=round_id)
+        except GameRound.DoesNotExist:
+            return JsonResponse({'error': 'Round not found'}, status=404)
+
+        response_count = Response.objects.filter(round=round_obj, is_augmented=False).count()
+
+        return JsonResponse({
+            'id': round_obj.id,
+            'question': round_obj.question.text,
+            'status': round_obj.status,
+            'response_count': response_count,
+            'created_at': round_obj.created_at.isoformat()
+        })
+
+
+class ApiRespondView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def get(self, request: HttpRequest, share_token: str) -> JsonResponse:
+        try:
+            round_obj = GameRound.objects.select_related('question').get(share_token=share_token, status='active')
+        except GameRound.DoesNotExist:
+            return JsonResponse({'error': 'Invalid or inactive round'}, status=404)
+
+        return JsonResponse({
+            'round_id': round_obj.id,
+            'question': round_obj.question.text
+        })
+
+    def post(self, request: HttpRequest, share_token: str) -> JsonResponse:
+        try:
+            round_obj = GameRound.objects.get(share_token=share_token, status='active')
+        except GameRound.DoesNotExist:
+            return JsonResponse({'error': 'Invalid or inactive round'}, status=404)
+
+        payload = _json_body(request)
+        word = (payload.get('word') or '').strip().lower()
+        player_id = (payload.get('player_id') or str(uuid.uuid4())).strip()
+
+        if not word:
+            return JsonResponse({'error': 'Word is required'}, status=400)
+
+        # Validate single word, no spaces, punctuation
+        if ' ' in word or not word.isalnum():
+            return JsonResponse({'error': 'Please enter a single word with letters only'}, status=400)
+
+        session = _get_session(request)
+
+        with transaction.atomic():
+            response, created = Response.objects.get_or_create(
+                round=round_obj,
+                player_id=player_id,
+                defaults={'word': word}
+            )
+            if not created:
+                return JsonResponse({'error': 'You have already responded to this round'}, status=400)
+
+            # Augment with 10 random words
+            _augment_responses(round_obj.id, word)
+
+            if session:
+                session.user.points += 1
+                session.user.save(update_fields=['points'])
+
+        return JsonResponse({'message': 'Response submitted successfully'})
+
+
+class ApiWordCloudView(View):
+    def get(self, request: HttpRequest, round_id: int) -> JsonResponse:
+        try:
+            round_obj = GameRound.objects.get(id=round_id)
+        except GameRound.DoesNotExist:
+            return JsonResponse({'error': 'Round not found'}, status=404)
+
+        # Aggregate word frequencies
+        from django.db.models import Count
+        frequencies = Response.objects.filter(round=round_obj).values('word').annotate(count=Count('word')).order_by('-count')
+
+        data = []
+        for f in frequencies:
+            word = f['word'].upper()
+            if word.replace(' ', '').isalnum() and ' ' not in word:
+                data.append({'word': word, 'count': f['count']})
+
+        return JsonResponse({'frequencies': data})
+
+
+class ApiShareView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request: HttpRequest, round_id: int) -> JsonResponse:
+        try:
+            round_obj = GameRound.objects.get(id=round_id, status='active')
+        except GameRound.DoesNotExist:
+            return JsonResponse({'error': 'Round not found or inactive'}, status=404)
+
+        payload = _json_body(request)
+        player_id = (payload.get('player_id') or str(uuid.uuid4())).strip()
+
+        ShareEvent.objects.create(round=round_obj, player_id=player_id)
+
+        return JsonResponse({'message': 'Share recorded'})
+
+
+class ApiLeaderboardView(View):
+    def get(self, request: HttpRequest, round_id: int) -> JsonResponse:
+        try:
+            round_obj = GameRound.objects.get(id=round_id)
+        except GameRound.DoesNotExist:
+            return JsonResponse({'error': 'Round not found'}, status=404)
+
+        # Calculate scores: responses + shares per player
+        response_scores = Response.objects.filter(round=round_obj, is_augmented=False).values('player_id').annotate(score=Count('player_id'))
+        share_scores = ShareEvent.objects.filter(round=round_obj).values('player_id').annotate(shares=Count('player_id'))
+
+        scores = {}
+        for r in response_scores:
+            scores[r['player_id']] = r['score']
+        for s in share_scores:
+            scores[s['player_id']] = scores.get(s['player_id'], 0) + s['shares']
+
+        leaderboard = [{'player_id': pid, 'score': score} for pid, score in scores.items()]
+        leaderboard.sort(key=lambda x: x['score'], reverse=True)
+
+        return JsonResponse({'leaderboard': leaderboard})
+
+
+class ApiEndRoundView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request: HttpRequest, round_id: int) -> JsonResponse:
+        session = _get_session(request)
+        if session is None or not session.user.is_active:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        try:
+            round_obj = GameRound.objects.get(id=round_id, created_by=session.user)
+        except GameRound.DoesNotExist:
+            return JsonResponse({'error': 'Round not found'}, status=404)
+
+        round_obj.status = 'ended'
+        round_obj.save()
+
+        return JsonResponse({'message': 'Round ended'})

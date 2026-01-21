@@ -3,11 +3,12 @@ function resolveUrl(path) {
   if (/^https?:\/\//i.test(path)) return path
 
   const baseUrl = import.meta.env.VITE_BACKEND_URL
-  if (!baseUrl) {
-    throw new Error('VITE_BACKEND_URL is required (example: http://127.0.0.1:8000)')
+  if (baseUrl) {
+    return new URL(path, baseUrl).toString()
   }
 
-  return new URL(path, baseUrl).toString()
+  // Use relative URLs when no backend URL is configured (proxy will handle it)
+  return path
 }
 
 export async function httpJson(path, { method = 'GET', token, body } = {}) {

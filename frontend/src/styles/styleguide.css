@@ -12,31 +12,30 @@
    Design Tokens
 -------------------------------- */
 :root {
-    /* Primary */
+    /* Main Color */
     --primary: #3377FF;
-    --primary-dark: #2659BF;
-    --primary-light: #99BBFF;
+    --primary-darker: #2659BF;
+    --primary-lighter: #99BBFF;
     --primary-subtle: #E3EDFF;
 
-    /* Dark */
-    --dark-1: #3A3A3C;
-    --dark-2: #6B7588;
-    --dark-3: #8F90A6;
-    --dark-4: #C7C9D9;
-
-    /* Light */
-    --light-1: #DDE5E9;
-    --light-2: #EBEBF0;
-    --light-3: #F2F2F5;
-    --light-4: #FAFAFC;
-
-    --error: #FF3B3B;
+    /* Brand Colors */
     --success: #06C270;
+    --info: #0063F7;
     --warning: #FFCC00;
-    --info: #0066F7;
-    --muted: #6B7588;
-    --light: #DDE5E9;
-    --dark: #3A3A3C;
+    --error: #FF3B3B;
+
+    /* State Colors */
+    --dark-4: #C7C9D9;
+    --dark-3: #8F90A6;
+    --dark-2: #6B7588;
+    --dark-1: #3A3A3C;
+
+    /* Light Colors */
+    --light-4: #FAFAFC;
+    --light-3: #F2F2F5;
+    --light-2: #EBEBF0;
+    --light-1: #DDE5E9;
+
     --white: #FFFFFF;
     --black: #000000;
 }
@@ -216,4 +215,216 @@ body.no-scroll {
 .cta-btn:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(51, 119, 255, 0.3);
+}
+
+/* -------------------------------
+   Typography
+-------------------------------- */
+.display-1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 200;
+    font-size: 48px;
+    line-height: 1.3;
+}
+
+.display-2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 200;
+    font-size: 40px;
+    line-height: 1.3;
+}
+
+.heading-1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1.3;
+}
+
+.heading-2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 1.3;
+}
+
+.heading-3 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.3;
+}
+
+.heading-4 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1.3;
+}
+
+.heading-5 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.3;
+}
+
+.heading-6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.lead-paragraph {
+    font-family: 'Mulish', sans-serif;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.5;
+}
+
+.body-large {
+    font-family: 'Mulish', sans-serif;
+    font-size: 20px;
+    line-height: 1.7;
+}
+
+.body-medium {
+    font-family: 'Mulish', sans-serif;
+    font-size: 18px;
+    line-height: 1.7;
+}
+
+.body-normal {
+    font-family: 'Mulish', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+.body-small {
+    font-family: 'Mulish', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.label-xs {
+    font-size: 10px;
+}
+
+.label-sm {
+    font-size: 12px;
+}
+
+.label-normal {
+    font-size: 14px;
+}
+
+.label-lg {
+    font-size: 16px;
+}
+
+.label-xl {
+    font-size: 18px;
+}
+
+/* -------------------------------
+   Buttons
+-------------------------------- */
+.btn-primary {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 9999px;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: var(--primary-darker);
+}
+
+.btn-secondary {
+    background: var(--light-3);
+    color: var(--dark-1);
+    border: 1px solid var(--light-2);
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 9999px;
+    cursor: pointer;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--dark-1);
+    border: none;
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 9999px;
+    cursor: pointer;
+}
+
+.btn-small {
+    padding: 12px 24px;
+    font-size: 14px;
+}
+
+.btn-large {
+    padding: 16px 48px;
+    font-size: 18px;
+}
+
+/* -------------------------------
+   Inputs
+-------------------------------- */
+.input-field {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--light-2);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--white);
+    color: var(--dark-1);
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-subtle);
+}
+
+.input-field.error {
+    border-color: var(--error);
+}
+
+.input-field.success {
+    border-color: var(--success);
+}
+
+/* -------------------------------
+   Word Cloud
+-------------------------------- */
+.word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 24px;
+    min-height: 300px;
+}
+
+.word-item {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--primary);
+    cursor: default;
+    transition: transform 0.2s;
+}
+
+.word-item:hover {
+    transform: scale(1.1);
 }

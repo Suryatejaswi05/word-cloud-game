@@ -82,6 +82,13 @@ class OtpDispatchError(RuntimeError):
 
 
 def dispatch_otp(*, channel: str, identifier: str, otp: str | None = None, display_name: str | None = None) -> None:
+    # For development/testing, skip external OTP gateway
+    debug_mode = os.getenv('DEBUG', '').lower() in ('true', '1', 'yes')
+    print(f'[DEBUG] DEBUG mode: {debug_mode}')
+    if debug_mode:
+        print(f'[DEBUG] Mock OTP dispatch: channel={channel}, identifier={identifier}')
+        return
+    
     url = (os.getenv('OTP_GATEWAY_URL') or '').strip()
     auth_header = (os.getenv('OTP_GATEWAY_AUTH_HEADER') or '').strip()
 
@@ -133,6 +140,11 @@ class OtpVerifyError(RuntimeError):
 
 
 def verify_otp_via_gateway(*, identifier: str, otp: str) -> bool:
+    # For development/testing, accept any 6-digit OTP
+    if os.getenv('DEBUG', '').lower() in ('true', '1', 'yes'):
+        print(f'[DEBUG] Mock OTP verification: identifier={identifier}, otp={otp}')
+        return len(otp) == 6 and otp.isdigit()
+    
     url = (os.getenv('OTP_GATEWAY_URL') or '').strip()
     auth_header = (os.getenv('OTP_GATEWAY_AUTH_HEADER') or '').strip()
 

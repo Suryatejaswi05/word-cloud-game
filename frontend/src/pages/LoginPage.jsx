@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthContext.jsx'
+import { useAuth } from '../auth/useAuth.js'
 import { apiOtpRequest } from '../api/authApi.js'
 import logo from '../assets/zdotapps.png'
 import emailIcon from '../assets/email_icon.png'
