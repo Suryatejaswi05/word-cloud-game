@@ -42,7 +42,7 @@ function LandingPage() {
             Learn Rules
           </button>
         </div>
-
+      
         <div className="landing-features">
           <div className="feature-card">
             <div className="feature-icon">🎮</div>

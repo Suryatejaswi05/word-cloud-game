@@ -5,6 +5,17 @@ class HackathonDbRouter:
         'authsession',
         'otpchallenge',
     }
+    GAME_MODEL_NAMES = {
+        'question',
+        'useranswer',
+        'wordfrequency',
+        'userscore',
+        'wordcloudround',
+        'wordcloudresponse',
+        'wordfrequencybyround',
+        'shareevent',
+        'roundscore',
+    }
 
     def db_for_read(self, model, **hints):
         if getattr(model._meta, 'app_label', None) != 'hackathon':
