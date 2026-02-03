@@ -50,6 +50,10 @@ export function AuthProvider({ children }) {
   const signIn = useCallback(async ({ username, password }) => {
     const data = await apiLogin({ username, password })
     applySession(data)
+    
+    // Reset score on fresh login
+    localStorage.removeItem('user_score');
+    
     await refresh()
     return data
   }, [applySession, refresh])

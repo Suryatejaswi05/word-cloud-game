@@ -18,4 +18,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path('', include('hackathon.urls')),
+    #path("api/", include("game.urls")),
 ]

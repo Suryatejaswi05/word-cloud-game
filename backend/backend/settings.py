@@ -30,22 +30,27 @@ _load_env_file(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1', 'localhost:5173', 'localhost:5174', '127.0.0.1:5173', '127.0.0.1:5174']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,localhost:5173').split(',')
 
+# Disable trailing slash redirects that break POST requests
+APPEND_SLASH = False
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',  # TEMPORARILY DISABLED
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'corsheaders',
     'hackathon',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -55,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'hackathon.middleware.CorsMiddleware',
+    # 'hackathon.middleware.CorsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -85,18 +90,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    },
-    'student': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'student_db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME', 'team22'),
+        'USER': os.getenv('DB_USER', 'team22'),
+        'PASSWORD': os.getenv('DB_PASSWORD', '3604c261f488'),
+        'HOST': os.getenv('DB_HOST', 'internship-leauge.cvuouqwaej9d.ap-south-1.rds.amazonaws.com'),
+        'PORT': os.getenv('DB_PORT', '3306'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     },
 }
 
-DATABASE_ROUTERS = [
-    'hackathon.db_router.HackathonDbRouter',
-]
+# Remove database router since we're using single database
+DATABASE_ROUTERS = []
 
 
 # Internationalization
@@ -127,8 +134,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
+    "http://localhost:5175",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -156,8 +165,10 @@ CORS_ALLOW_HEADERS = [
 
 # Disable CSRF for development
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
 ]

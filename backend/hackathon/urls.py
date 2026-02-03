@@ -1,26 +1,56 @@
+# hackathon/urls.py
 from django.urls import path
-
+from django.urls import path
+from .views import HealthView, submit_answer, get_wordcloud
+from . import views
 from .views import (
-    ApiLoginView, ApiLogoutView, ApiMeView, ApiQuestionsView, ApiOtpRequestView, ApiOtpVerifyView, HealthView,
-    ApiHackathonsView, ApiSubmissionsView, ApiCreateRoundView, ApiRoundDetailsView,
-    ApiRespondView, ApiWordCloudView, ApiShareView, ApiLeaderboardView, ApiEndRoundView
+    # Health & Auth
+    HealthView,
+    ApiLoginView,
+    ApiLogoutView,
+    ApiMeView,
+    ApiOtpRequestView,
+    ApiOtpVerifyView,
+
+    # Questions
+    ApiQuestionsView,
+
+    # Simple Word Cloud (USED BY StartGame + WordCloudPage)
+    submit_answer,
+    get_wordcloud,
+    get_sample_wordcloud,
+    get_user_score,
+
+    # Optional: game / round features (keep if needed)
+    create_game_session,
+    join_shared_game,
 )
 
 urlpatterns = [
-    path('', HealthView.as_view(), name='health'),
-    path('api/login', ApiLoginView.as_view(), name='api_login'),
-    path('api/otp/request', ApiOtpRequestView.as_view(), name='api_otp_request'),
-    path('api/otp/verify', ApiOtpVerifyView.as_view(), name='api_otp_verify'),
-    path('api/me', ApiMeView.as_view(), name='api_me'),
-    path('api/questions', ApiQuestionsView.as_view(), name='api_questions'),
-    path('api/logout', ApiLogoutView.as_view(), name='api_logout'),
-    path('api/hackathons', ApiHackathonsView.as_view(), name='api_hackathons'),
-    path('api/submissions', ApiSubmissionsView.as_view(), name='api_submissions'),
-    path('api/create-round', ApiCreateRoundView.as_view(), name='api_create_round'),
-    path('api/round/<int:round_id>', ApiRoundDetailsView.as_view(), name='api_round_details'),
-    path('api/round/<int:round_id>/wordcloud', ApiWordCloudView.as_view(), name='api_wordcloud'),
-    path('api/round/<int:round_id>/share', ApiShareView.as_view(), name='api_share'),
-    path('api/round/<int:round_id>/leaderboard', ApiLeaderboardView.as_view(), name='api_leaderboard'),
-    path('api/round/<int:round_id>/end', ApiEndRoundView.as_view(), name='api_end_round'),
-    path('respond/<str:share_token>', ApiRespondView.as_view(), name='api_respond'),
+    # ---------------- HEALTH ----------------
+    path("", HealthView.as_view(), name="health"),
+
+    # ---------------- AUTH ----------------
+    path("api/login", ApiLoginView.as_view()),
+    path("api/logout", ApiLogoutView.as_view()),
+    path("api/me", ApiMeView.as_view()),
+    path("api/otp/request", ApiOtpRequestView.as_view()),
+    path("api/otp/verify", ApiOtpVerifyView.as_view()),
+
+    # ---------------- QUESTIONS ----------------
+    path("api/questions", ApiQuestionsView.as_view()),
+
+    # ---------------- WORD CLOUD (THIS IS THE IMPORTANT PART) ----------------
+    path("api/submit-answer", submit_answer),   # 👈 StartGame writes here
+    path("api/wordcloud", get_wordcloud),       # 👈 WordCloudPage reads here
+    path("api/sample-wordcloud", get_sample_wordcloud),  # 👈 Sample cloud reads here
+    path("api/user-score", get_user_score),
+    path("api/record-share", views.record_share),
+
+    # ---------------- OPTIONAL GAME ----------------
+    path("api/game/create", create_game_session),
+    path("api/game/<uuid:game_id>", join_shared_game),
+    path("", HealthView.as_view()),
+    path("api/submit-answer", submit_answer),
+    path("api/wordcloud", get_wordcloud),
 ]

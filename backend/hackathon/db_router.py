@@ -4,6 +4,17 @@ class HackathonDbRouter:
         'appusermember',
         'authsession',
         'otpchallenge',
+        'question',  # Move question to default database
+    }
+    GAME_MODEL_NAMES = {
+        'useranswer',
+        'wordfrequency',
+        'userscore',
+        'wordcloudround',
+        'wordcloudresponse',
+        'wordfrequencybyround',
+        'shareevent',
+        'roundscore',
     }
 
     def db_for_read(self, model, **hints):

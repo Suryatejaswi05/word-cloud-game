@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
+import './LandingPage.css'
 
 function LandingPage() {
   const navigate = useNavigate()
@@ -10,12 +11,10 @@ function LandingPage() {
 
   useEffect(() => {
     function onDocMouseDown(e) {
-      if (!menuRef.current) return
-      if (!menuRef.current.contains(e.target)) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false)
       }
     }
-
     document.addEventListener('mousedown', onDocMouseDown)
     return () => document.removeEventListener('mousedown', onDocMouseDown)
   }, [])
@@ -26,58 +25,71 @@ function LandingPage() {
   }
 
   return (
-    <div className="landing-shell">
-      <div className="landing-topbar">
-        <div className="landing-team">Team No: {user?.team_no ?? '--'}</div>
-        <div style={{ marginLeft: 'auto', color: 'var(--dark-1)', fontWeight: 'bold' }}>Points: {user?.points ?? 0}</div>
+    <div className="landing-container">
 
-        <div className="dropdown" ref={menuRef}>
-          <button
-            className="landing-userbtn"
-            type="button"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            <i className="bi bi-person-circle" />
-          </button>
-
-          <ul
-            className={`dropdown-menu dropdown-menu-end landing-dropdown${menuOpen ? ' show' : ''}`}
-          >
-            <li className="px-3 pt-2 pb-1">
-              <div className="landing-userline">
-                <i className="bi bi-person-circle" />
-                <div>
-                  <div className="landing-username">{member?.name || '--'}</div>
-                  <div className="landing-userdetail">{member?.email || '--'}</div>
-                  <div className="landing-userdetail">{member?.phone || '--'}</div>
-                  <div className="landing-userdetail">{member?.member_id || '--'}</div>
-                </div>
-              </div>
-            </li>
-            <li>
-              <hr className="dropdown-divider" />
-            </li>
-            <li className="px-3 pb-3">
-              <button className="btn btn-danger w-100" type="button" onClick={onLogout}>
-                Logout
-              </button>
-            </li>
-          </ul>
+      {/* 🔝 Account Icon */}
+      <div className="account-wrapper" ref={menuRef}>
+        <div className="account-icon" onClick={() => setMenuOpen(!menuOpen)}>
+          👤
         </div>
+
+        {menuOpen && (
+          <div className="account-dropdown">
+            <p><strong>{member?.name}</strong></p>
+            <p className="email">{member?.email}</p>
+            <button onClick={onLogout}>Logout</button>
+          </div>
+        )}
       </div>
 
-      <main className="landing-center" aria-live="polite">
-        <section className="center-section">
-          <h2 className="title">Word Cloud</h2>
-          <p className="description">
-            Create a fresh word cloud and invite participants to submit their words for this round.
-          </p>
-          <button type="button" className="primary-button" onClick={() => navigate('/select-question')}>
-            Start New Round
+      <div className="landing-content">
+        <h1 className="landing-title">Welcome to Word Cloud Game</h1>
+        <p className="landing-thoughts">- Turn Thoughts into Winning Words</p>
+        <p className="landing-subtitle">Your Battle Begins Here . . !</p>
+        <p className="landing-description">
+          Test your vocabulary skills and compete with your friends and families in this engaging Word Cloud Game.
+        </p>
+
+        {/* 🚀 CTA */}
+        <div className="landing-cta-container">
+          <button
+            className="cta-button cta-primary-highlight"
+            onClick={() => navigate('/game')}
+          >
+            Start Game
           </button>
-        </section>
-      </main>
+        </div>
+
+        {/* ⭐ Features */}
+        <div className="landing-features">
+          <div className="feature-card">
+            <div className="feature-icon">📋</div>
+            <h3 className="feature-title">Game Rules</h3>
+            <ul className="feature-rules">
+              <li>Answer questions with programming language names only</li>
+              <li>Only valid programming languages are accepted</li>
+              <li>Earn +1 point for each correct answer</li>
+              <li>Earn +1 point for sharing the game</li>
+            </ul>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">🏆</div>
+            <h3 className="feature-title">Team Competition</h3>
+            <p className="feature-description">
+              Collaborate with your hackathon team and compete for top rankings.
+            </p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">⚡</div>
+            <h3 className="feature-title">Real-time Challenges</h3>
+            <p className="feature-description">
+              Test your speed and accuracy in real-time word cloud challenges.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
